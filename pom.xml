@@ -80,7 +80,7 @@
             <groupId>com.github.HZERR</groupId>
             <artifactId>FXEngine-Bridge</artifactId>
             <version>1.0</version>
-            <scope>provided</scope>
+<!--            <scope>provided</scope>-->
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>
