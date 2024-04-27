@@ -30,7 +30,7 @@ public class Capmonster extends AbstractCapmonster {
 
         BigDecimal balance = getBalance();
         if (logProvider != null)
-            logProvider.getLogger().error("Текущий баланс аккаунта: " + balance.toString());
+            logProvider.getLogger().debug("Текущий баланс аккаунта: " + balance.toString());
 
         if (balance.compareTo(IMAGE_TO_TEXT_CAPTCHA_PRICE) < 0) {
             throw new CapmonsterInsufficientBalanceException("Недостаточный баланс на аккаунте " + balance);
@@ -38,13 +38,22 @@ public class Capmonster extends AbstractCapmonster {
 
         int taskId = createTask(imageToTextRequest);
 
-        Response<ImageToTextData> response;
-        while ((response = getTaskResult(ImageToTextData.class, taskId)).getStatus().equals(Status.PROCESSING)) {
+        Response<ImageToTextData> response = getTaskResult(ImageToTextData.class, taskId);
+        for (int counter = 0; response.getStatus().equals(Status.PROCESSING) || counter <= 60; response = getTaskResult(ImageToTextData.class, taskId)) {
             try {
-                Thread.sleep(3000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 throw new CapmonsterInterruptedOperationException(e.getMessage());
             }
+
+            counter++;
+        }
+
+        if (logProvider != null) {
+            if (response.getStatus().equals(Status.FAILURE)) {
+                logProvider.getLogger().error("Капча не была распознана сервисом. Код ошибки: " + response.getErrorData().getCode());
+            } else
+                logProvider.getLogger().debug("Капча была успешно распознана сервисом. Ответ: " + response.getData().getText());
         }
 
         return response;
