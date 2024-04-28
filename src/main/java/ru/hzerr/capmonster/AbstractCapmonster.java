@@ -8,6 +8,7 @@ import ru.hzerr.capmonster.exception.CapmonsterConnectionException;
 import ru.hzerr.capmonster.exception.CapmonsterConnectionIOException;
 import ru.hzerr.capmonster.exception.CapmonsterFailedOperationException;
 import ru.hzerr.capmonster.exception.CapmonsterInterruptedOperationException;
+import ru.hzerr.capmonster.request.CreateTaskRequest;
 import ru.hzerr.capmonster.request.GetBalanceRequest;
 import ru.hzerr.capmonster.request.GetTaskResultRequest;
 import ru.hzerr.capmonster.response.ErrorData;
@@ -25,7 +26,7 @@ public abstract class AbstractCapmonster implements ICapmonster {
 
     private final String clientKey;
 
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
     private final HttpClient CLIENT = HttpClient.newHttpClient();
 
     public AbstractCapmonster(String clientKey) {
@@ -36,15 +37,19 @@ public abstract class AbstractCapmonster implements ICapmonster {
      * @return taskId
      */
     protected <T> int createTask(T request) throws CapmonsterInterruptedOperationException, CapmonsterConnectionIOException, CapmonsterConnectionException, CapmonsterFailedOperationException {
-        HttpRequest createTaskRequest = HttpRequest.newBuilder()
+        CreateTaskRequest<T> createTaskRequest = new CreateTaskRequest<>();
+        createTaskRequest.setData(request);
+        createTaskRequest.setClientKey(clientKey);
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.capmonster.cloud/createTask"))
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(request)))
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(createTaskRequest)))
                 .build();
 
         HttpResponse<String> response;
 
         try {
-            response = CLIENT.send(createTaskRequest, BodyHandlers.ofString());
+            response = CLIENT.send(httpRequest, BodyHandlers.ofString());
         } catch (InterruptedException ie) {
             throw new CapmonsterInterruptedOperationException(ie.getMessage());
         } catch (IOException io) {

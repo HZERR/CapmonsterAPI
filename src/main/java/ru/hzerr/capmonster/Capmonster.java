@@ -40,6 +40,9 @@ public class Capmonster extends AbstractCapmonster {
 
         Response<ImageToTextData> response = getTaskResult(ImageToTextData.class, taskId);
         for (int counter = 0; response.getStatus().equals(Status.PROCESSING) || counter <= 60; response = getTaskResult(ImageToTextData.class, taskId)) {
+            if (logProvider != null)
+                logProvider.getLogger().debug("Обработка задачи " + taskId + "...");
+
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
@@ -51,9 +54,9 @@ public class Capmonster extends AbstractCapmonster {
 
         if (logProvider != null) {
             if (response.getStatus().equals(Status.FAILURE)) {
-                logProvider.getLogger().error("Капча не была распознана сервисом. Код ошибки: " + response.getErrorData().getCode());
+                logProvider.getLogger().error("Капча '" + taskId + "' не была распознана сервисом. Код ошибки: " + response.getErrorData().getCode());
             } else
-                logProvider.getLogger().debug("Капча была успешно распознана сервисом. Ответ: " + response.getData().getText());
+                logProvider.getLogger().debug("Капча '" + taskId + "' была успешно распознана сервисом. Ответ: " + response.getData().getText());
         }
 
         return response;
